@@ -19,7 +19,7 @@ class CreateUsersTable extends Migration
             $table->string('nickname')->nullable();
             $table->string('profile_pic')->default('avatar.png');
             $table->string('email')->unique();
-            $table->text('status')->default('Avaliable');
+            $table->string('status')->default('Avaliable');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();

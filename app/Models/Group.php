@@ -22,6 +22,11 @@ class Group extends Model
     public function members(){
         return $this->hasMany(GroupMember::class);
     }
+    
+
+    public function getAvatarAttribute($pic) {
+        return asset('assets/groups/'.$pic);
+    }
 
     public function checkifUserIsAMember(User $user){
         $check = GroupMember::where('group_id', $this->id)->where('user_id', $user->id)->exists();

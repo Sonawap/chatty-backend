@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Models\User;
+use App\Models\Group;
+use App\Models\GroupMember;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -10,21 +12,49 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Intervention\Image\Facades\Image;
 use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\ResetPasswordRequest;
 use App\Notifications\RegisterNotification;
 use App\Http\Requests\ForgotPasswordRequest;
-use App\Models\Group;
-use App\Models\GroupMember;
 use Illuminate\Support\Facades\Notification;
 
 class UserController extends Controller
 {
+    public function UploadImage(Request $request){
+        $this->validate($request,[
+            'image' => 'required',
+
+        ]);
+        $user = auth()->user();
+        if(!$user->avatar == 'avatar.png'){
+            $currentphoto = $user->avatar;
+        }else{
+            $currentphoto = '';
+        }
+        $name = str_replace(' ', '',$user->fullname).time(). '.jpg';
+        Image::make($request->image)->save(public_path('/assets/profile/').$name);
+        $request->merge(['photo' => $name]);
+
+        $storePhoto = public_path('/assets/profile/').$currentphoto;
+        if(file_exists($storePhoto)){
+            @unlink($storePhoto);
+        }
+
+        $user->avatar = $request->photo;
+
+        $user->save();
+
+
+        return response()->json([
+            'message' => 'uploaded',
+            'image' => $user->avatar
+        ],200);
+
+    }
+
     public function allUsers(){
         $users = User::latest()->limit(100)->get();
-        $users->each(function($user){
-            $user->avatar = asset('assets/profile/'.$user->profile_pic);
-        });
 
         return response()->json([
             'status' => true,
@@ -50,9 +80,10 @@ class UserController extends Controller
             'message' => 'Logged out'
         ],200);
     }
+
+
     public function user(){
         $user = auth()->user();
-        $user->avatar = asset('assets/profile/'.$user->profile_pic);
         $user->notifications = $user->unReadNotifications;
         $user->notifications->each(function($notification){
             if($notification->type == "App\Notifications\RegisterNotification"){
@@ -70,10 +101,6 @@ class UserController extends Controller
     public function groups(){
         $user = auth()->user();
         $groups = $user->groups;
-        $groups->each(function($group){
-            $group->avatar = asset('assets/groups/'.$group->avatar);
-            return $group;
-        });
         return response()->json([
             'status'=> true,
             'groups' => $groups,
@@ -90,15 +117,6 @@ class UserController extends Controller
         ]);
     }
 
-    public function notbelongToGroups(){
-        $user = auth()->user();
-        $groups = $user->getOtherGroups();
-
-        return response()->json([
-            'status'=> true,
-            'groups' => $groups,
-        ]);
-    }
 
     public function forgot(ForgotPasswordRequest $request)
     {

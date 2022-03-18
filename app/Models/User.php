@@ -47,6 +47,10 @@ class User extends Authenticatable
         return $this->hasMany(Group::class)->orderBy('created_at', 'desc');
     }
 
+    public function getAvatarAttribute($pic) {
+        return asset('assets/profile/'.$pic);
+    }
+
     public function getWithGroups(){
         return $this;
     }
@@ -55,17 +59,7 @@ class User extends Authenticatable
         $check = GroupMember::where('user_id', $this->id)->pluck('group_id')->toArray();
         $groups= Group::whereIn('id', $check)->latest()->get();
         $groups->each(function($group){
-            $group->avatar = asset('assets/groups/'.$group->avatar);
-            return $group;
-        });
-        return $groups;
-    }
-
-    public function getOtherGroups(){
-        $check = GroupMember::whereuser_id(!$this->id)->pluck('group_id')->toArray();
-        $groups= Group::whereIn('id', $check)->get();
-        $groups->each(function($group){
-            $group->avatar = asset('assets/groups/'.$group->avatar);
+            $group->chat = Chat::where('model_id', $group->id)->first();
             return $group;
         });
         return $groups;

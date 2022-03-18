@@ -1,11 +1,13 @@
 <?php
 
-use App\Http\Controllers\API\ChatController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
+use App\Http\Controllers\API\ChatController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\GroupController;
 use App\Http\Controllers\API\GroupMemberController;
 use App\Http\Controllers\API\GroupMessageController;
+use App\Http\Controllers\API\DirectMessageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,14 +30,22 @@ Route::group(['prefix' => 'user'], function() {
 
 
 Route::group(['middleware' => 'auth:sanctum'], function() {
+
+    Broadcast::routes();
+
     Route::get('/user', [UserController::class, 'user']);
     Route::get('/users', [UserController::class, 'allUsers']);
+
     Route::group(['prefix' => 'user'], function() {
+
         Route::post('logout', [UserController::class, 'logout']);
         Route::get('groups', [UserController::class, 'groups']);
         Route::get('belongToGroups', [UserController::class, 'belongToGroups']);
-        Route::get('notbelongToGroups', [UserController::class, 'notbelongToGroups']);
+        Route::post('uploadProfilePhoto', [UserController::class, 'UploadImage']);
+        Route::get('allChats', [ChatController::class, 'allChats']);
+
     });
+
     Route::apiResource('groups', GroupController::class);
 
     Route::group(['prefix' => 'group'], function() {
@@ -48,10 +58,13 @@ Route::group(['middleware' => 'auth:sanctum'], function() {
     Route::group(['prefix' => 'message'], function() {
         Route::get('{group_id}', [GroupMessageController::class, 'index']);
         Route::post('/', [GroupMessageController::class, 'send']);
+        Route::post('/direct', [DirectMessageController::class, 'send']);
     });
+
 
     Route::group(['prefix' => 'chat'], function() {
         Route::get('group', [ChatController::class, 'group']);
+        Route::post('direct', [ChatController::class, 'direct']);
     });
 
 });

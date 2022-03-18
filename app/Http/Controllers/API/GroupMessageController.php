@@ -4,9 +4,13 @@ namespace App\Http\Controllers\API;
 
 use App\Models\User;
 use App\Models\Group;
+use App\Events\MessageEvent;
+use App\Events\MessageNotificationEvent;
 use App\Models\GroupMessage;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SendMessageRequest;
+use App\Notifications\MessageNotification;
+use Illuminate\Support\Facades\Notification;
 
 class GroupMessageController extends Controller
 {
@@ -29,11 +33,12 @@ class GroupMessageController extends Controller
 
         $message->save();
 
-        $message->user = User::findOrFail($message->user_id);
-        $message->user->avatar = asset('assets/profile/'.$message->user->profile_pic);
+        event(new MessageEvent($message));
+        event(new MessageNotificationEvent($message));
+
+
         return response()->json([
             'status' => true,
-            'message' => $message,
         ],200);
     }
 }
